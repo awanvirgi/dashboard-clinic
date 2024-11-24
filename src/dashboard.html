@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="output.css">
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/id.js"></script>
+    <title>Dashboard</title>
+</head>
+
+<body>
+    <div>
+        <div class="bg-main h-24 flex justify-between items-center w-full px-20 py-4">
+            <div class="flex items-center h-full gap-8">
+                <figure class="flex h-full">
+                    <img src="images/logo-putih.png" class="object-cover" alt="">
+                </figure>
+                <h1 class="text-2xl font-bold text-white">Klinik Bidan Nining</h1>
+            </div>
+            <div>
+                <!-- Tombol Logout dengan Event -->
+                <button class="border-2 border-white px-8 py-2 rounded-lg text-white font-semibold"
+                    id="logoutBtn">Logout</button>
+            </div>
+        </div>
+        <div class="px-20 py-8">
+            <div class="mb-4 flex justify-end">
+                <input type="text" id="searchInput" placeholder="Cari berdasarkan token..."
+                    class="border-2 border-slate-200 px-4 py-2">
+                <button id="searchButton" class="bg-main text-white px-4 py-2 rounded">
+                    Cari
+                </button>
+            </div>
+            <div>
+                <table class="table-auto w-full" id="dynamicTable">
+                    <thead>
+                        <tr>
+                            <th class="border-2 border-slate-600">Token</th>
+                            <th class="border-2 border-slate-600">Nama</th>
+                            <th class="border-2 border-slate-600">Layanan</th>
+                            <th class="border-2 border-slate-600">Tipe</th>
+                            <th class="border-2 border-slate-600">Bidan</th>
+                            <th class="border-2 border-slate-600">Tanggal</th>
+                            <th class="border-2 border-slate-600">Pembayaran</th>
+                            <th class="border-2 border-slate-600">Atas Nama</th>
+                            <th class="border-2 border-slate-600">Status</th>
+                            <th class="border-2 border-slate-600">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-2 border-slate-600 text-center"></tbody>
+                </table>
+            </div>
+            <div id="pagination" class="flex justify-center mt-4 space-x-2">
+                <button id="prevPage" class="bg-gray-300 text-gray-800 px-4 py-2 rounded disabled:opacity-50"
+                    disabled>Previous</button>
+                <span id="currentPage" class="text-gray-800 px-4 py-2"></span>
+                <button id="nextPage" class="bg-gray-300 text-gray-800 px-4 py-2 rounded disabled:opacity-50"
+                    disabled>Next</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        moment.locale("id");
+        let currentPage = 1;
+        const limit = 10;
+        let searchQuery = ""; // Untuk menyimpan query pencarian
+
+        // Fungsi untuk memuat data tabel
+        async function loadTableData() {
+            try {
+                const response = await fetch(`http://localhost:4000/api/appointments?page=${currentPage}&limit=${limit}&name=${searchQuery}`, {
+                    method: "GET",
+                });
+
+                if (!response.ok) {
+                    throw new Error("Gagal memuat data");
+                }
+
+                const result = await response.json();
+                const { data, pagination } = result;
+
+                const table = document.getElementById("dynamicTable");
+                const tbody = table.getElementsByTagName("tbody")[0];
+                tbody.innerHTML = ""; // Bersihkan tabel sebelum memuat data baru
+
+                // Tambahkan data baru
+                data.forEach((item) => {
+                    const newRow = tbody.insertRow();
+
+                    const cell1 = newRow.insertCell(0);
+                    cell1.innerHTML = item.token;
+                    cell1.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell2 = newRow.insertCell(1);
+                    cell2.innerHTML = item.Patient.name;
+                    cell2.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell3 = newRow.insertCell(2);
+                    cell3.innerHTML = item.services;
+                    cell3.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell4 = newRow.insertCell(3);
+                    cell4.innerHTML = item.visit;
+                    cell4.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell5 = newRow.insertCell(4);
+                    cell5.innerHTML = item.Midwafe.name;
+                    cell5.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell6 = newRow.insertCell(5);
+                    cell6.innerHTML = moment(item.date).format("LLLL");
+                    cell6.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell7 = newRow.insertCell(6);
+                    cell7.innerHTML = item.payment;
+                    cell7.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell8 = newRow.insertCell(7);
+                    cell8.innerHTML = item.aname;
+                    cell8.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    const cell9 = newRow.insertCell(8);
+                    const select = document.createElement("select");
+                    ["Belum", "Selesai", "Batal"].forEach((status) => {
+                        const option = document.createElement("option");
+                        option.value = status;
+                        option.textContent = status;
+                        if (status === item.status) option.selected = true;
+                        select.appendChild(option);
+                    });
+                    select.addEventListener("change", async () => {
+                        const newStatus = select.value;
+                        try {
+                            const updateResponse = await fetch(
+                                `http://localhost:4000/api/appointments/${item.id}`,
+                                {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ status: newStatus }),
+                                }
+                            );
+                            if (updateResponse.ok) {
+                                alert(`Status berhasil diubah menjadi ${newStatus}`);
+                            } else {
+                                alert("Gagal mengubah status");
+                            }
+                        } catch (err) {
+                            console.error("Kesalahan saat mengupdate status:", err);
+                        }
+                    });
+                    cell9.appendChild(select);
+                    cell9.className = "px-4 py-2 border-y-2 border-slate-600";
+
+                    // Tombol Aksi untuk melihat detail
+                    const cell10 = newRow.insertCell(9);
+                    const detailButton = document.createElement("button");
+                    detailButton.textContent = "Lihat Detail";
+                    detailButton.className = "bg-main text-white px-4 py-2 rounded";
+                    detailButton.onclick = () => {
+                        window.location.href = `detail.html?id=${item.id}`;
+                    };
+                    cell10.appendChild(detailButton);
+                    cell10.className = "px-4 py-2 border-y-2 border-slate-600 text-center";
+                });
+
+                // Update pagination
+                document.getElementById("currentPage").textContent = `Page ${pagination.currentPage} of ${pagination.totalPages}`;
+                document.getElementById("prevPage").disabled = !pagination.prevPage;
+                document.getElementById("nextPage").disabled = !pagination.nextPage;
+
+                document.getElementById("prevPage").onclick = () => {
+                    if (pagination.prevPage) {
+                        currentPage = pagination.prevPage;
+                        loadTableData();
+                    }
+                };
+
+                document.getElementById("nextPage").onclick = () => {
+                    if (pagination.nextPage) {
+                        currentPage = pagination.nextPage;
+                        loadTableData();
+                    }
+                };
+            } catch (error) {
+                console.error("Terjadi kesalahan:", error);
+            }
+        }
+
+        document.getElementById("searchButton").addEventListener("click", () => {
+            searchQuery = document.getElementById("searchInput").value.trim();
+            currentPage = 1; // Reset ke halaman pertama
+            loadTableData();
+        });
+
+        window.onload = loadTableData;
+        document.getElementById("logoutBtn").addEventListener("click", function () {
+            // Menghapus statusLogin dari localStorage
+            localStorage.removeItem("statusLogin");
+
+            // Redirect ke halaman ../index.html setelah logout
+            window.location.href = "../index.html";  // Pastikan file ../index.html ada di direktori yang sama
+        });
+
+        // Pastikan statusLogin ada di localStorage sebelum mengakses dashboard
+        if (!localStorage.getItem("statusLogin")) {
+            // Jika tidak ada statusLogin, arahkan kembali ke ../index.html
+            window.location.href = "../index.html";
+        }
+    </script>
+</body>
+
+</html>

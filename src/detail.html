@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="output.css">
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/locale/id.js"></script>
+    <title>Detail Janji Temu</title>
+</head>
+
+<body>
+    <div class="bg-main h-24 flex justify-between items-center w-full px-20 py-4">
+        <div class="flex items-center h-full gap-8">
+            <figure class="flex h-full">
+                <img src="images/logo-putih.png" class="object-cover" alt="">
+            </figure>
+            <h1 class="text-2xl font-bold text-white">Klinik Bidan Nining</h1>
+        </div>
+        <div>
+            <button class="border-2 border-white px-8 py-2 rounded-lg text-white font-semibold"
+                onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <div class="px-20 py-8">
+        <div id="appointmentDetails" class="space-y-4">
+            <h2 class="text-3xl font-bold">Detail Janji Temu</h2>
+
+            <div id="appointmentInfo">
+                <!-- Data akan dimuat di sini -->
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        moment.locale("id");
+
+        // Mendapatkan ID dari URL (misalnya: /appointments/detail/5)
+        const urlParams = new URLSearchParams(window.location.search);
+        const appointmentId = urlParams.get('id'); // Mengambil id dari query parameter
+
+        async function loadAppointmentDetails() {
+            try {
+                // Mengambil data janji temu dari API menggunakan ID
+                const response = await fetch(`http://localhost:4000/api/appointments/${appointmentId}`);
+
+                if (!response.ok) {
+                    throw new Error('Gagal memuat data');
+                }
+
+                const { data } = await response.json();
+                console.log(data);
+
+                // Menampilkan detail janji temu
+                const appointmentInfo = document.getElementById("appointmentInfo");
+
+                appointmentInfo.innerHTML = `
+                    <div class="p-4 border-2 border-slate-600 rounded-lg">
+                        <p><strong>Token:</strong> ${data.token}</p>
+                        <p><strong>Nama Pasien:</strong> ${data.Patient.name}</p>
+                        <p><strong>Layanan:</strong> ${data.services}</p>
+                        <p><strong>Tanggal Janji Temu:</strong> ${moment(data.date).format("LLLL")}</p>
+                        <p><strong>Alasan:</strong> ${data.reason}</p>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Visit:</strong> ${data.visit}</p>
+                        <p><strong>Pembayaran:</strong> ${data.payment}</p>
+                        <p><strong>Atas Nama:</strong> ${data.aname}</p>
+                        <p><strong>Bidan:</strong> ${data.Midwafe.name}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Terjadi kesalahan:', error);
+                const appointmentInfo = document.getElementById("appointmentInfo");
+                appointmentInfo.innerHTML = "<p>Data tidak ditemukan.</p>";
+            }
+        }
+
+        // Panggil fungsi untuk memuat data detail janji temu saat halaman dimuat
+        window.onload = loadAppointmentDetails;
+    </script>
+</body>
+
+</html>

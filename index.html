@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Dashboard</title>
+    <link rel="stylesheet" href="src/output.css">
+</head>
+<body>
+    <div class="flex justify-center items-center h-screen w-screen">
+        <div class="flex bg-main flex-col text-center items-center p-10 rounded-xl text-white">
+            <div class="h-28 w-28 flex mb-10">
+                <img src="src/images/logo-putih.png" class="object-cover h-full w-full" alt="">
+            </div>
+            <div class="mb-6">
+                <h1 class="text-xl font-bold">ADMIN KLINIK</h1>
+                <h5>Bidan Nining</h5>
+            </div>
+            <label for="password" class="mb-6">
+                <h5 class="mb-2">Password</h5>
+                <input type="password" name="password" id="password" placeholder="Masukan Password" class="py-2 px-4 rounded-lg text-black">
+            </label>
+            <div>
+                <button onclick="login()" class="px-6 py-2 bg-white text-main text-lg font-semibold rounded-xl">Masuk</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const login = () =>{
+            if(document.getElementById("password").value == "Cihuy"){
+                localStorage.setItem("statusLogin",true)
+                window.location.href = "src/dashboard.html"
+            }else{
+                alert("Password salah")
+            }
+        }
+    </script>
+</body>
+</html>
